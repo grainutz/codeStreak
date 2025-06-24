@@ -1,12 +1,12 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
-  Brain, Code, Trophy, Calendar,
-  Zap, ChevronRight, Star, Clock, Target
+  Code, Trophy, Calendar,
+  Zap, ChevronRight, Clock, Target
 } from 'lucide-react';
 import LanguageSelector from '@/components/LanguageSelector';
 import DailyLesson from '@/components/DailyLesson';
@@ -22,12 +22,9 @@ const Index = () => {
   const [currentStreak, setCurrentStreak] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  localStorage.removeItem('token'); 
-
-
   // Check authentication on component mount
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const storedUserId = localStorage.getItem('userId');
     
     if (!token || !storedUserId) {
@@ -35,13 +32,7 @@ const Index = () => {
       return;
     }
 
-    // // If userId from context is not set, redirect to login
-    // if (!userId) {
-    //   navigate('/authform');
-    //   return;
-    // }
-
-    //checkDailyProgress();
+    checkDailyProgress();
   }, [userId, navigate]);
 
   // Load user progress and check if today's lesson is completed
@@ -59,7 +50,7 @@ const Index = () => {
       // Fetch progress from API to get current streak
       if (language) {
         const progressData = await getProgress(language);
-        setCurrentStreak(progressData.currentStreak || 0);
+        setCurrentStreak(progressData.progress?.currentStreak || 0);
       }
     } catch (error) {
       console.error('Failed to load progress:', error);
@@ -68,29 +59,23 @@ const Index = () => {
     }
   };
 
-  const handleLanguageSelect = (lang: string) => {
-    setLanguage(lang);
-    localStorage.setItem('language', lang);
-  };
-
   const handleLessonComplete = async () => {
     const today = new Date().toDateString();
     const lastCompleted = localStorage.getItem('lastCompletedDate');
-    const token = localStorage.getItem('token');
 
-    if (token && lastCompleted !== today) {
+    if (lastCompleted !== today) {
       try {
-        // Update progress on server
-        await updateProgress(token, { 
+        await updateProgress({ 
           completedToday: true,
-          language: language 
+          language: language,
+          lessonsCompleted: 1,
+          timeSpent: 15,
+          xpEarned: 10
         });
         
-        // Update local storage
         localStorage.setItem('lastCompletedDate', today);
         setHasCompletedToday(true);
         
-        // Refresh progress data
         await checkDailyProgress();
       } catch (error) {
         console.error('Failed to update progress:', error);
@@ -101,26 +86,12 @@ const Index = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
     localStorage.removeItem('userId');
     localStorage.removeItem('language');
     localStorage.removeItem('lastCompletedDate');
     navigate('/authform');
   };
-
-  // // Show loading spinner while checking authentication
-  // if (isLoading) {
-  //   return (
-  //     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 flex items-center justify-center">
-  //       <div className="text-center">
-  //         <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-  //           <Code className="w-6 h-6 text-white animate-pulse" />
-  //         </div>
-  //         <p className="text-gray-600">Loading...</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   if (!language) {
     return <LanguageSelector />;

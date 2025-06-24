@@ -1,4 +1,3 @@
-// routes/auth.ts
 import express, { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
@@ -97,24 +96,19 @@ router.post('/login', asyncHandler(async (req: Request, res: Response) => {
   });
 }));
 
-router.get(
-  '/profile',
-  authenticateToken,
-  asyncHandler<AuthRequest>(async (req, res) => {
-    const user = req.user!;
+router.get('/profile', authenticateToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const user = req.user!;
 
-    res.json({
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        avatar: user.avatar,
-        createdAt: user.createdAt,
-        lastLoginAt: user.lastLoginAt,
-      },
-    });
-  })
-);
-
+  res.json({
+    user: {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      avatar: user.avatar,
+      createdAt: user.createdAt,
+      lastLoginAt: user.lastLoginAt,
+    },
+  });
+}));
 
 export default router;

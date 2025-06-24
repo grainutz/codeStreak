@@ -1,4 +1,4 @@
-// models/Progress.ts
+
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IDailyProgress {
@@ -98,8 +98,6 @@ const progressSchema = new Schema<IProgress>({
     default: Date.now
   }
 });
-
-
 
 // Create compound index for user and language
 progressSchema.index({ userId: 1, language: 1 }, { unique: true });

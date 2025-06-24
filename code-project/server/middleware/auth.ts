@@ -1,4 +1,4 @@
-// middleware/auth.ts
+
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import User, { IUser } from '../models/User';
@@ -23,7 +23,7 @@ export const authenticateToken = async (
 
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || 'secret'
+      process.env.JWT_SECRET || 'your-secret-key'
     ) as { userId: string };
 
     const user = await User.findById(decoded.userId);
@@ -35,7 +35,7 @@ export const authenticateToken = async (
     req.user = user;
     next();
   } catch (err) {
+    console.error('Authentication error:', err);
     res.status(403).json({ error: 'Invalid or expired token' });
   }
 };
-
