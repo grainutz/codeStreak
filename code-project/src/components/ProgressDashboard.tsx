@@ -1,22 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from 'lucide-react';
 import WeeklyOverview from './WeeklyOverview';
 import StatsGrid from './StatsGrid';
 import AchievementsList from './AchievementsList';
 import UpcomingLessons from './UpcomingLessons';
+import { useUser } from '@/contexts/UserContext';
+import { getProgress } from '@/services/api';
+import { useNavigate } from 'react-router-dom';
 
 
-interface ProgressDashboardProps {
-  language: string;
-  streak: number;
-  onBack: () => void;
-}
+const ProgressDashboard: React.FC = () => {
+  const { userId, language } = useUser(); // Get language from context
+  const [progress, setProgress] = useState<any>(null);
+  
 
-const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ language, streak, onBack }) => {
-  const completedDays = [true, true, false, true, true, false, false]; // Mock data
+  useEffect(() => {
+  if (!userId) return;
+
+  getProgress(userId).then((data) => {
+    console.log("Fetched progress:", data); //  
+    setProgress(data);
+  }).catch((err) => {
+    console.error("Failed to fetch progress:", err);
+  });
+}, [userId]);
+
+  if (!progress) return <p className="text-center mt-12 text-gray-600">Loading progress...</p>;
 
   return (
+    
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-10">
@@ -25,33 +38,32 @@ const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ language, streak,
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={onBack}
               className="text-gray-600"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            <h1 className="text-lg font-bold text-gray-900">Your Progress</h1>
+            <h1 className="text-lg font-bold text-gray-900">Your Progress in {language}</h1>
           </div>
         </div>
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
         <WeeklyOverview
-          completedDays={completedDays}
-          completedCount={5}
+          completedDays={progress.completedDays}
+          completedCount={progress.completedDays.filter(Boolean).length}
           totalDays={7}
-          progressValue={71}
+          progressValue={Math.round((progress.completedDays.filter(Boolean).length / 7) * 100)}
         />
 
         <StatsGrid
-          streak={streak}
-          lessonsCompleted={12}
-          totalXP={850}
-          timeSpent="45m"
+          streak={progress.streak}
+          lessonsCompleted={progress.lessonsCompleted}
+          totalXP={progress.totalXP}
+          timeSpent={progress.timeSpent}
         />
 
-        <AchievementsList streak={streak} />
+        <AchievementsList streak={progress.streak} />
 
         <UpcomingLessons />
       </div>
@@ -60,4 +72,3 @@ const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ language, streak,
 };
 
 export default ProgressDashboard;
-

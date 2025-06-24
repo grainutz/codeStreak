@@ -1,5 +1,3 @@
-
-
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,29 +6,47 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import NotificationService from './services/notificationService';
+import { UserProvider } from "@/contexts/UserContext"; 
+import ProgressDashboard from "@/components/ProgressDashboard";
+import Login from "./pages/Login";
+import LanguageSelector from "./components/LanguageSelector";
+import AuthForm from "./pages/AuthForm";
 
 const queryClient = new QueryClient();
 
+const isAuthenticated = () => {
+  return !!localStorage.getItem("authToken");
+};
+
 const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <UserProvider>
+        <TooltipProvider>
+          <Sonner />
+          <NotificationWrapper />
+        </TooltipProvider>
+      </UserProvider>
+    </QueryClientProvider>
+  );
+};
+
+const NotificationWrapper = () => {
   useEffect(() => {
-    // Initialize notifications and schedule daily reminders
     NotificationService.initializePushNotifications();
     NotificationService.scheduleDailyReminder();
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/dashboard" element={<ProgressDashboard />} />
+        <Route path="/select-language" element={<LanguageSelector />} />
+        <Route path="/authform" element={<AuthForm />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 

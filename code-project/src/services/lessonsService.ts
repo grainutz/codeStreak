@@ -22,10 +22,13 @@ export interface LessonData {
 export const loadLessonsData = async (): Promise<LessonData> => {
   try {
     const response = await fetch('/lessons/lessons.json');
-    if (!response.ok) {
-      throw new Error('Failed to load lessons data');
-    }
-    return await response.json();
+const text = await response.text(); // debug
+console.log("Raw lessons.json text:", text);
+
+if (!response.ok || !text) {
+  throw new Error('Failed to load lessons data');
+}
+return JSON.parse(text);
   } catch (error) {
     console.error('Error loading lessons:', error);
     // Return fallback data if JSON file is not available

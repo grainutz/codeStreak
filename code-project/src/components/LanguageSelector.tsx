@@ -2,6 +2,9 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Code, Sparkles, TrendingUp, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useUser } from '@/contexts/UserContext';
+import { login } from '@/services/api';
 
 interface Language {
   id: string;
@@ -77,12 +80,16 @@ const languages: Language[] = [
   }
 ];
 
-interface LanguageSelectorProps {
-  onLanguageSelect: (language: string) => void;
-}
+const LanguageSelector: React.FC = () => {
 
-const LanguageSelector: React.FC<LanguageSelectorProps> = ({ onLanguageSelect }) => {
-  // ... keep existing code (component JSX)
+  const navigate = useNavigate();
+  const { setUserId, setLanguage } = useUser();
+
+  const handleSelect = (lang: string) => {
+  setLanguage(lang);
+  localStorage.setItem('language', lang);
+  navigate('/'); // Go to main dashboard (Index)
+};
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50">
       {/* Header */}
@@ -99,20 +106,20 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ onLanguageSelect })
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
-        {/* Popular Languages Header */}
+        {/* pop languages header */}
         <div className="flex items-center gap-2 mb-6">
           <TrendingUp className="w-5 h-5 text-purple-600" />
           <h2 className="text-lg font-semibold text-gray-900">Popular Languages</h2>
           <Sparkles className="w-4 h-4 text-yellow-500" />
         </div>
 
-        {/* Language Cards */}
+        {/* language cards */}
         <div className="space-y-4">
           {languages.map((language) => (
             <Card 
               key={language.id}
               className="border-0 shadow-lg cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-xl"
-              onClick={() => onLanguageSelect(language.id)}
+              onClick={() => handleSelect(language.id)}
             >
               <CardContent className="p-0">
                 <div className="flex">
@@ -172,6 +179,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ onLanguageSelect })
         </div>
       </div>
     </div>
+    
   );
 };
 

@@ -1,57 +1,135 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Code, Trophy, Calendar, Zap, ChevronRight, Star, Clock, Target } from 'lucide-react';
+import {
+  Brain, Code, Trophy, Calendar,
+  Zap, ChevronRight, Star, Clock, Target
+} from 'lucide-react';
 import LanguageSelector from '@/components/LanguageSelector';
 import DailyLesson from '@/components/DailyLesson';
 import ProgressDashboard from '@/components/ProgressDashboard';
+import { useUser } from '@/contexts/UserContext';
+import { updateProgress, getProgress } from '@/services/api';
 
 const Index = () => {
-  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(
-    localStorage.getItem('selectedLanguage')
-  );
+  const { userId, language, setLanguage } = useUser();
+  const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<'home' | 'lesson' | 'progress'>('home');
-  const [dailyStreak, setDailyStreak] = useState(
-    parseInt(localStorage.getItem('dailyStreak') || '0')
-  );
   const [hasCompletedToday, setHasCompletedToday] = useState(false);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
+  localStorage.removeItem('token'); 
+
+
+  // Check authentication on component mount
   useEffect(() => {
-    const lastCompletedDate = localStorage.getItem('lastCompletedDate');
-    const today = new Date().toDateString();
-    setHasCompletedToday(lastCompletedDate === today);
-  }, []);
+    const token = localStorage.getItem('token');
+    const storedUserId = localStorage.getItem('userId');
+    
+    if (!token || !storedUserId) {
+      navigate('/authform');
+      return;
+    }
 
-  const handleLanguageSelect = (language: string) => {
-    setSelectedLanguage(language);
-    localStorage.setItem('selectedLanguage', language);
+    // // If userId from context is not set, redirect to login
+    // if (!userId) {
+    //   navigate('/authform');
+    //   return;
+    // }
+
+    //checkDailyProgress();
+  }, [userId, navigate]);
+
+  // Load user progress and check if today's lesson is completed
+  const checkDailyProgress = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Check local storage for today's completion
+      const lastCompletedDate = localStorage.getItem('lastCompletedDate');
+      const today = new Date().toDateString();
+      const completedToday = lastCompletedDate === today;
+      
+      setHasCompletedToday(completedToday);
+
+      // Fetch progress from API to get current streak
+      if (language) {
+        const progressData = await getProgress(language);
+        setCurrentStreak(progressData.currentStreak || 0);
+      }
+    } catch (error) {
+      console.error('Failed to load progress:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleLessonComplete = () => {
+  const handleLanguageSelect = (lang: string) => {
+    setLanguage(lang);
+    localStorage.setItem('language', lang);
+  };
+
+  const handleLessonComplete = async () => {
     const today = new Date().toDateString();
     const lastCompleted = localStorage.getItem('lastCompletedDate');
-    
-    if (lastCompleted !== today) {
-      const newStreak = dailyStreak + 1;
-      setDailyStreak(newStreak);
-      localStorage.setItem('dailyStreak', newStreak.toString());
-      localStorage.setItem('lastCompletedDate', today);
-      setHasCompletedToday(true);
+    const token = localStorage.getItem('token');
+
+    if (token && lastCompleted !== today) {
+      try {
+        // Update progress on server
+        await updateProgress(token, { 
+          completedToday: true,
+          language: language 
+        });
+        
+        // Update local storage
+        localStorage.setItem('lastCompletedDate', today);
+        setHasCompletedToday(true);
+        
+        // Refresh progress data
+        await checkDailyProgress();
+      } catch (error) {
+        console.error('Failed to update progress:', error);
+      }
     }
-    
+
     setCurrentView('home');
   };
 
-  if (!selectedLanguage) {
-    return <LanguageSelector onLanguageSelect={handleLanguageSelect} />;
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('language');
+    localStorage.removeItem('lastCompletedDate');
+    navigate('/authform');
+  };
+
+  // // Show loading spinner while checking authentication
+  // if (isLoading) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+  //           <Code className="w-6 h-6 text-white animate-pulse" />
+  //         </div>
+  //         <p className="text-gray-600">Loading...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
+  if (!language) {
+    return <LanguageSelector />;
   }
 
   if (currentView === 'lesson') {
     return (
-      <DailyLesson 
-        language={selectedLanguage} 
+      <DailyLesson
+        language={language}
         onComplete={handleLessonComplete}
         onBack={() => setCurrentView('home')}
       />
@@ -60,11 +138,7 @@ const Index = () => {
 
   if (currentView === 'progress') {
     return (
-      <ProgressDashboard 
-        language={selectedLanguage}
-        streak={dailyStreak}
-        onBack={() => setCurrentView('home')}
-      />
+      <ProgressDashboard />
     );
   }
 
@@ -80,14 +154,22 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">codeStreak</h1>
-                <p className="text-sm text-gray-600 capitalize">{selectedLanguage}</p>
+                <p className="text-sm text-gray-600 capitalize">{language}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="bg-orange-100 text-orange-700 hover:bg-orange-200">
                 <Zap className="w-3 h-3 mr-1" />
-                {dailyStreak}
+                {currentStreak} day streak
               </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                Logout
+              </Button>
             </div>
           </div>
         </div>
@@ -104,19 +186,18 @@ const Index = () => {
               </div>
               <Clock className="w-5 h-5 opacity-75" />
             </div>
-            
+
             <h2 className="text-xl font-bold mb-2">
               {hasCompletedToday ? 'Challenge Complete!' : 'Ready to Code?'}
             </h2>
-            
+
             <p className="text-purple-100 mb-4">
-              {hasCompletedToday 
+              {hasCompletedToday
                 ? 'Great job! Come back tomorrow for your next challenge.'
-                : `Master ${selectedLanguage} with today's interactive coding lesson.`
-              }
+                : `Master ${language} with today's interactive coding lesson.`}
             </p>
 
-            <Button 
+            <Button
               onClick={() => setCurrentView('lesson')}
               disabled={hasCompletedToday}
               className="w-full bg-white text-purple-600 hover:bg-purple-50 font-semibold py-3 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -132,8 +213,8 @@ const Index = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Your Progress</h3>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => setCurrentView('progress')}
                 className="text-purple-600 hover:text-purple-700"
@@ -143,76 +224,25 @@ const Index = () => {
               </Button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">Weekly Goal</span>
-                  <span className="text-sm text-gray-500">5/7 days</span>
-                </div>
-                <Progress value={71} className="h-2" />
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Current Streak</span>
+                <span className="font-semibold text-purple-600">{currentStreak} days</span>
               </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Zap className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-gray-900">{dailyStreak}</p>
-                  <p className="text-xs text-gray-600">Day Streak</p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Trophy className="w-6 h-6 text-green-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-gray-900">12</p>
-                  <p className="text-xs text-gray-600">Lessons</p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Star className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-gray-900">850</p>
-                  <p className="text-xs text-gray-600">XP</p>
-                </div>
-              </div>
+              <p className="text-sm text-gray-600">Keep it up! Complete today's lesson to extend your streak.</p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="border-0 shadow-lg cursor-pointer hover:scale-105 transition-transform">
-            <CardContent className="p-4 text-center">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Brain className="w-6 h-6 text-white" />
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-1">Practice</h4>
-              <p className="text-xs text-gray-600">Review concepts</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg cursor-pointer hover:scale-105 transition-transform">
-            <CardContent className="p-4 text-center">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Calendar className="w-6 h-6 text-white" />
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-1">Schedule</h4>
-              <p className="text-xs text-gray-600">Set reminders</p>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Language Switcher */}
         <Card className="border-0 shadow-lg">
           <CardContent className="p-4">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="w-full justify-between text-left"
               onClick={() => {
-                localStorage.removeItem('selectedLanguage');
-                setSelectedLanguage(null);
+                localStorage.removeItem('language');
+                setLanguage('');
               }}
             >
               <div className="flex items-center gap-3">
