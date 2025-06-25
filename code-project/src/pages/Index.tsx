@@ -1,11 +1,11 @@
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Code, Trophy, Calendar,
+  Code, 
   Zap, ChevronRight, Clock, Target
 } from 'lucide-react';
 import LanguageSelector from '@/components/LanguageSelector';
@@ -20,7 +20,7 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<'home' | 'lesson' | 'progress'>('home');
   const [hasCompletedToday, setHasCompletedToday] = useState(false);
   const [currentStreak, setCurrentStreak] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [_isLoading, setIsLoading] = useState(true);
 
   // Check authentication on component mount
   useEffect(() => {
