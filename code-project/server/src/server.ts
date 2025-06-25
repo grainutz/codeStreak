@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import authRoutes from '../routes/auth';
 import progressRoutes from '../routes/progress';
 
+
+
 dotenv.config();
 
 const app: Express = express();
