@@ -2,8 +2,8 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import authRoutes from '../routes/auth';
-import progressRoutes from '../routes/progress';
+import authRoutes from './routes/auth';
+import progressRoutes from './routes/progress';
 
 
 
