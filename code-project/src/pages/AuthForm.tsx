@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { login, register } from '@/services/api';
 import { useNavigate } from 'react-router-dom';
@@ -22,31 +23,30 @@ const AuthForm: React.FC = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const { email, password, username } = formData;
-    const res = isLogin
-      ? await login(email, password)
-      : await register(username, email, password);
+    try {
+      const { email, password, username } = formData;
+      const res = isLogin
+        ? await login(email, password)
+        : await register(username, email, password);
 
-    // ✅ Save token and user data
-    localStorage.setItem('authToken', res.token);
-    localStorage.setItem('userId', res.user.id);
-    localStorage.setItem('language', res.language ?? 'JavaScript');
+      localStorage.setItem('authToken', res.token);
+      localStorage.setItem('userId', res.user.id);
+      localStorage.setItem('language', 'JavaScript');
 
-    setUserId(res.user.id);
-    setLanguage(res.language ?? 'JavaScript');
+      setUserId(res.user.id);
+      setLanguage('JavaScript');
 
-    toast.success(`${isLogin ? 'Logged in' : 'Registered'} successfully`);
+      toast.success(`${isLogin ? 'Logged in' : 'Registered'} successfully`);
 
-    setTimeout(() => {
-      navigate('/');
-    }, 100);
-  } catch (err: any) {
-    toast.error(err.message || 'Something went wrong');
-  }
-};
+      setTimeout(() => {
+        navigate('/');
+      }, 100);
+    } catch (err: any) {
+      toast.error(err.message || 'Something went wrong');
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-purple-100 via-blue-100 to-green-100">

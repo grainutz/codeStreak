@@ -1,3 +1,4 @@
+
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,15 +9,10 @@ import NotFound from "./pages/NotFound";
 import NotificationService from './services/notificationService';
 import { UserProvider } from "@/contexts/UserContext"; 
 import ProgressDashboard from "@/components/ProgressDashboard";
-import Login from "./pages/Login";
 import LanguageSelector from "./components/LanguageSelector";
 import AuthForm from "./pages/AuthForm";
 
 const queryClient = new QueryClient();
-
-const isAuthenticated = () => {
-  return !!localStorage.getItem("authToken");
-};
 
 const App = () => {
   return (

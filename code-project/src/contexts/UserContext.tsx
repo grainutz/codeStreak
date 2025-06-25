@@ -28,7 +28,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (storedUserId) setUserId(storedUserId);
     if (storedLanguage) setLanguage(storedLanguage);
 
-    setIsHydrated(true); // ✅ Indicate hydration is done
+    setIsHydrated(true);
   }, []);
 
   return (
