@@ -5,33 +5,54 @@ const getApiBaseUrl = () => {
   }
   
   // For production/mobile, use your Railway deployment URL
-  // Replace 'YOUR_RAILWAY_APP_NAME' with your actual Railway app name
-  // It should look like: https://your-app-name.railway.app/api
   return 'https://codestreak-production.up.railway.app/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
 
 export const register = async (name: string, email: string, password: string) => {
+  console.log('Attempting registration with:', { name, email, API_BASE_URL });
+  
   const res = await fetch(`${API_BASE_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, email, password }),
   });
 
-  if (!res.ok) throw new Error('Registration failed');
-  return res.json();
+  console.log('Register response status:', res.status);
+  console.log('Register response headers:', Object.fromEntries(res.headers.entries()));
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+    console.error('Registration failed:', errorData);
+    throw new Error(errorData.error || 'Registration failed');
+  }
+  
+  const data = await res.json();
+  console.log('Registration successful:', data);
+  return data;
 };
 
 export const login = async (email: string, password: string) => {
+  console.log('Attempting login with:', { email, API_BASE_URL });
+  
   const res = await fetch(`${API_BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
 
-  if (!res.ok) throw new Error('Login failed');
+  console.log('Login response status:', res.status);
+  console.log('Login response headers:', Object.fromEntries(res.headers.entries()));
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+    console.error('Login failed:', errorData);
+    throw new Error(errorData.error || 'Login failed');
+  }
+  
   const data = await res.json();
+  console.log('Login successful:', data);
   return data;
 };
 
