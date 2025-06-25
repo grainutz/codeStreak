@@ -1,5 +1,16 @@
+const getApiBaseUrl = () => {
+  // If running on localhost, use localhost for development
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:3000/api';
+  }
+  
+  // For production/mobile, use your Railway deployment URL
+  // Replace 'YOUR_RAILWAY_APP_NAME' with your actual Railway app name
+  // It should look like: https://your-app-name.railway.app/api
+  return 'https://codestreak-production.up.railway.app/api';
+};
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = getApiBaseUrl();
 
 export const register = async (name: string, email: string, password: string) => {
   const res = await fetch(`${API_BASE_URL}/auth/register`, {
